@@ -118,6 +118,7 @@ public class FR24Forwarder implements OgnAircraftBeaconForwarder {
      * @param descriptor
      */
     private void sendToFr24(AircraftBeacon beacon, AircraftDescriptor descriptor) {
+    	// NOTE: OGN descriptors are (for now) not needed by FR24. FR24 uses its own resolvers
         sendToFr24(beacon);
     }
 
