@@ -1,0 +1,2 @@
+# this class implements OGN forwarder for FlighRadar24
+org.ogn.gateway.fr24.FR24Forwarder

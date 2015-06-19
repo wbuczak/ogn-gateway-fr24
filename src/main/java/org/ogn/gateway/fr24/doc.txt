@@ -1,0 +1,132 @@
+
+---
+From Piotr <piotr@fr24.com> Wed, Aug 14, 2013 at 7:14 AM
+        struct FLARM_ExtID     //
+        {
+            uint32_t ID:24;      // 24-bit "address"
+            uint32_t idType:2;   // ID is => 0:random, 1:ICAO address, 2:from serial
+            uint32_t acftType:5; // 1 => glider, 2 => towing aircraft, ...
+            uint32_t reserv:1;
+        }ac __attribute__ ((__packed__)) ;
+
+
+---
+
+From Pawel : Sun, Jan 27, 2013 at 6:43 PM
+
+This is a structure of 8x4 bytes.
+In one UDP packet there can be several structures, for every aircraft received.
+
+So if you get a packet of 64 bytes - you know there are too reports in thei packet.
+
+Pawel.
+
+class FLARM_PosSpeed   // FLARM position/speed report
+{ public:
+  uint32_t  ID         // FLARM ID with some extra bits
+  uint32_t  Time;      // [sec]               Unix time
+  int32_t   Lat;       // [1e-7 deg]          changes accord. to Speed/Heading for predictions
+  int32_t   Lon;       // [1e-7 deg]          changes accord. to Speed/Heading for predictions
+  int16_t   Alt;       // [m]                 changes accord. to Climb for predictions
+  int16_t   Climb;     // [0.1 m/s]           assumed constant for prediction
+  uint16_t  Speed;     // [0.1 m/s]           assumed constant for prediction
+  uint16_t  Heading;   // [65536/360deg]      changes accord. to TurnRate for predictions
+  int16_t   TurnRate;  // [65536/360deg/4sec] TurnRate reported by FLARM is often 1/2 or 3/4 of true turn-rate
+  uint8_t   acftType;  // 1 = glider, 3 = helicopter, ...
+  uint8_t   RxErr;     // [bit] number of corrected transmission errors
+  uint8_t   accHor;    // [m] horizontal accuracy (old hardware often reports 63m)
+  uint8_t   accVer;    // [m] vertical accuracy (old hardware often reports 63m)
+  uint8_t   movMode;   // 1=on the ground, 5=cruising, 3=towing, 4=circling right, 7=circling left
+  uint8_t   Flag;      // bit flags (not filled yet)
+} ;
+
+---
+From Pawel: Thu, Aug 22, 2013 at 12:42 AM
+
+Here is the UDP packet format:
+
+There are 8 32-bit words per postion report.
+
+The first word is the ID:
+
+struct FLARM_ExtID      
+{
+   unsigned ID:24;       // 24-bit "address"
+   unsigned idType:2;    // ID is => 0:random, 1:ICAO address, 2:from serial
+   unsigned acftType:5;  // 1 => glider, 2 => towing aircraft, ...
+   unsigned private:1; 
+} 
+
+and the other 7 words are:
+
+class FLARM_PosSpeed     // FLARM position/speed report
+{
+ public:
+   uint32_t  Time;      // [sec]             Unix time
+   int32_t   Lat;       // [1e-7 deg]
+   int32_t   Lon;       // [1e-7 deg]
+   int16_t   Alt;       // [m]               GPS altitude (not AMSL)
+   int16_t   Climb;     // [0.1 m/s]
+   uint16_t  Speed;     // [0.1 m/s]
+   uint16_t  Heading;   // [65536/360deg]
+   int16_t   TurnRate;  // [65536/360deg/4sec] TurnRate reported by FLARM is often 1/2 or 3/4 of true turn-rate
+   uint8_t   acftType;  // is already given in ID
+   uint8_t   movMode;   // 1=on the ground, 5=cruising, 3=towing, 4=circling right, 7=circling left
+   uint8_t   accHor;    // [m] horizontal accuracy (old hardware often reports 63m)
+   uint8_t   accVer;    // [m] vertical accuracy (old hardware often reports 63m)
+   uint8_t   RxErr;     // [bit] number of corrected transmission errors
+   uint8_t   Flag;      // bit flags (not filled yet)
+} ;
+
+---
+From Pawel: Thu, Aug 22, 2013 at 12:34 AM
+
+Here is the class that prepares and sends a UDP packet,
+it really packs several position reports into one UDP packet and sends it.
+
+class PosSpeed_Sender   // send pos-speed as UDP packets for databases or visualizers
+{
+  public:
+   const static int MaxFrames = 40; // 46 max for MTU=1500 bytes
+   int   Frames;                    // current number of frames stored in the Packet
+   uint32_t    Packet[MaxFrames*8]; // UDP packet: holds up to 40 pos-speed frames
+   UDP_Sender  Sender;
+   uint32_t    LastTime;
+
+  public:
+   PosSpeed_Sender() { Frames=0; LastTime=0; }
+   int Open(void) { return Sender.Open(); }
+   int Close(void) { return Sender.Close(); }
+   int AddDest(const char *Dest) { return Sender.AddDest(Dest); }
+
+   int AddPosSpeed(FLARM_Aircraft &Acft)          // add pos-speed of given aircraft
+   { if(Frames>=MaxFrames) Send();                // if not enough space
+     Packet[Frames*8]=Acft.ID;                    // add time/position report to the FR24 packet
+     memcpy(Packet+(Frames*8+1), Acft.LastPosSpeed(), 7*sizeof(uint32_t));
+     Frames++; return 1; }
+
+   int Send(void)                                 // Send the UDP packet
+   { if(Frames==0) return 0;
+     int Ret=Sender.Send(Packet, Frames*8);
+     printf("PosSpeed_Sender::Send(): %d frames to %s, ... %d bytes (+header)\n",
+                Frames, Sender.Dest[0].getIPColonPort(), Frames*8*sizeof(uint32_t) );
+         Frames=0; return Ret; }
+
+   void TimeCheck(uint32_t Time)
+   { 
+    if(Time!=LastTime)             // when time advances to a new second
+      { Send(); LastTime=Time; }   // send accumulated frames
+   }
+
+} ;
+
+---
+
+83.140.248.18:15099
+This is to send UDP.
+
+From Piotr Pawluczuk piotr@fr24.com (Mon, Jan 27, 2014 at 10:38 AM)
+
+The new IP or hostname is wro.fr24.com / 83.140.21.76.
+
+---
