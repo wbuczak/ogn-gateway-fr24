@@ -2,7 +2,7 @@
  * Copyright (c) 2014 OGN, All Rights Reserved.
  */
 
-package org.ogn.gateway.fr24;
+package org.ogn.gateway.plugin.fr24;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
