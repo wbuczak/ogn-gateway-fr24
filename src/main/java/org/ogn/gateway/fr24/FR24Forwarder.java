@@ -86,7 +86,7 @@ public class FR24Forwarder implements OgnAircraftBeaconForwarder {
 	}
 
 	@Override
-	public void onBeacon(AircraftBeacon beacon, AircraftDescriptor descriptor, String rawBeacon) {
+	public void onBeacon(AircraftBeacon beacon, AircraftDescriptor descriptor) {
 		boolean sendDescriptor = false;
 
 		if (descriptor.isKnown()) {
