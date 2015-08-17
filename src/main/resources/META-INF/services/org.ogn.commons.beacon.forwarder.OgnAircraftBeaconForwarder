@@ -1,2 +1,2 @@
 # this class implements OGN aircraft beacons forwarder for FlighRadar24
-org.ogn.gateway.fr24.plugin.FR24Forwarder
+org.ogn.gateway.plugin.fr24.FR24Forwarder
