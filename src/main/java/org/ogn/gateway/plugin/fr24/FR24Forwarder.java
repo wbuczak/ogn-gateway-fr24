@@ -14,6 +14,7 @@ import java.net.PortUnreachableException;
 import java.net.SocketAddress;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import org.ogn.commons.beacon.AircraftBeacon;
 import org.ogn.commons.beacon.AircraftDescriptor;
@@ -29,18 +30,18 @@ import org.slf4j.LoggerFactory;
  */
 public class FR24Forwarder implements OgnAircraftBeaconForwarder {
 
-	Logger LOG = LoggerFactory.getLogger(FR24Forwarder.class);
+	Logger									LOG				= LoggerFactory.getLogger(FR24Forwarder.class);
 
-	private static final String VERSION = "1.0.0";
+	private static final String				VERSION			= "1.0.0";
 
-	private static final String FR24_SRV_NAME = "wro.fr24.com";
-	private static final int FR24_SRV_PORT = 15099;
+	private static final String				FR24_SRV_NAME	= "wro.fr24.com";
+	private static final int				FR24_SRV_PORT	= 15099;
 
-	private DatagramSocket socket;
-	private SocketAddress serverAddress;
-	private DatagramPacket datagram;
+	private DatagramSocket					socket;
+	private SocketAddress					serverAddress;
+	private DatagramPacket					datagram;
 
-	private Map<String, AircraftDescriptor> descriptors = new HashMap<>();
+	private Map<String, AircraftDescriptor>	descriptors		= new HashMap<>();
 
 	/**
 	 * default constructor
@@ -86,24 +87,24 @@ public class FR24Forwarder implements OgnAircraftBeaconForwarder {
 	}
 
 	@Override
-	public void onBeacon(AircraftBeacon beacon, AircraftDescriptor descriptor) {
+	public void onBeacon(AircraftBeacon beacon, Optional<AircraftDescriptor> descriptor) {
 		boolean sendDescriptor = false;
 
-		if (descriptor.isKnown()) {
+		if (descriptor.isPresent()) {
 
-			if (!descriptors.containsKey(descriptor)) {
-				descriptors.put(descriptor.getRegNumber(), descriptor);
+			if (!descriptors.containsKey(descriptor.get())) {
+				descriptors.put(descriptor.get().getRegNumber(), descriptor.get());
 				sendDescriptor = true;
 			} else {
-				AircraftDescriptor prevDescr = descriptors.get(descriptor.getRegNumber());
+				AircraftDescriptor prevDescr = descriptors.get(descriptor.get().getRegNumber());
 				// send the descriptor update to FR24 ONLY if it has changed
 				if (!prevDescr.equals(descriptor)) {
-					descriptors.put(descriptor.getRegNumber(), descriptor);
+					descriptors.put(descriptor.get().getRegNumber(), descriptor.get());
 					sendDescriptor = true;
 				}
 			}
 
-		}// if
+		} // if
 
 		// update descriptor ONLY if needed
 		if (sendDescriptor) {
@@ -117,7 +118,7 @@ public class FR24Forwarder implements OgnAircraftBeaconForwarder {
 	 * @param beacon
 	 * @param descriptor
 	 */
-	private void sendToFr24(AircraftBeacon beacon, AircraftDescriptor descriptor) {
+	private void sendToFr24(AircraftBeacon beacon, Optional<AircraftDescriptor> descriptor) {
 		// NOTE: OGN descriptors are (for now) not needed by FR24. FR24 uses its
 		// own resolvers
 		sendToFr24(beacon);
@@ -149,8 +150,8 @@ public class FR24Forwarder implements OgnAircraftBeaconForwarder {
 		try {
 
 			// Add data
-			dos.writeInt(swap((int) (Long.parseLong(beacon.getId(), 16) | (beacon.getAddressType().getCode() << 24) | (beacon
-					.getAircraftType().getCode()) << 26)));// Extended Id
+			dos.writeInt(swap((int) (Long.parseLong(beacon.getId(), 16) | (beacon.getAddressType().getCode() << 24)
+					| (beacon.getAircraftType().getCode()) << 26)));// Extended Id
 
 			dos.writeInt(swap((int) (System.currentTimeMillis() / 1000L))); // Unix
 																			// current

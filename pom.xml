@@ -6,6 +6,11 @@
 	<version>1.0.0</version>
 	<description>OGN gateway plugin for FR24</description>
 
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
+
 	<dependencies>
 		<dependency>
 			<groupId>org.ogn</groupId>
@@ -39,13 +44,13 @@
 			<version>4.12</version>
 			<scope>test</scope>
 		</dependency>
-<!-- 		<dependency> -->
-<!-- 			<groupId>com.fasterxml.jackson.core</groupId> -->
-<!-- 			<artifactId>jackson-databind</artifactId> -->
-<!-- 			<version>2.5.1</version> -->
-<!-- 			<scope>provided</scope> -->
-<!-- 			<optional>true</optional> -->
-<!-- 		</dependency> -->
+		<!-- <dependency> -->
+		<!-- <groupId>com.fasterxml.jackson.core</groupId> -->
+		<!-- <artifactId>jackson-databind</artifactId> -->
+		<!-- <version>2.5.1</version> -->
+		<!-- <scope>provided</scope> -->
+		<!-- <optional>true</optional> -->
+		<!-- </dependency> -->
 	</dependencies>
 
 	<build>
